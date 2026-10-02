@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+  gateway-service: Spring Cloud Reactive API Gateway
+  ============================================================================
+  Acts as the single front door for our entire e-commerce platform.
+  The React frontend communicates exclusively through this gateway (Port 8080),
+  which forwards requests to User Service, Product Service, Order Service,
+  or the Scikit-learn AI Service.
+  Standard Port: 8080
+  ============================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.novamart</groupId>
+		<artifactId>novamart-platform</artifactId>
+		<version>1.0.0</version>
+	</parent>
+
+	<artifactId>gateway-service</artifactId>
+	<packaging>jar</packaging>
+	<name>gateway-service</name>
+	<description>Spring Cloud API Gateway</description>
+
+	<dependencies>
+		<!-- Reactive Spring Cloud Gateway -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-gateway</artifactId>
+		</dependency>
+
+		<!-- Eureka Client to discover microservice instances dynamically -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

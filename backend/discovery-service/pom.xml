@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+  discovery-service: Netflix Eureka Service Registry
+  ============================================================================
+  Acts as the central phonebook for all microservices in the NovaMart platform.
+  When User Service, Product Service, or Order Service boot up, they register
+  their hostname and port here.
+  Standard Port: 8761
+  ============================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.novamart</groupId>
+		<artifactId>novamart-platform</artifactId>
+		<version>1.0.0</version>
+	</parent>
+
+	<artifactId>discovery-service</artifactId>
+	<packaging>jar</packaging>
+	<name>discovery-service</name>
+	<description>Netflix Eureka Service Registry</description>
+
+	<dependencies>
+		<!-- Netflix Eureka Server Starter -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
