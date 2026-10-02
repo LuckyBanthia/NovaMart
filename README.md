@@ -30,28 +30,28 @@
 
 ```mermaid
 flowchart TD
-    Client["💻 React Storefront & Admin Portal\n(Port 5173)"] -->|HTTP / REST| Gateway["🚪 Spring Cloud API Gateway\n(Port 8080)"]
+    Client["React Storefront & Admin Portal<br/>(Port 5173)"] -->|"HTTP / REST"| Gateway["Spring Cloud API Gateway<br/>(Port 8080)"]
 
-    subgraph "Service Discovery & Governance"
-        Eureka["📡 Netflix Eureka Discovery Server\n(Port 8761)"]
-        Gateway -.->|Heartbeat / Registry| Eureka
+    subgraph Discovery ["Service Discovery & Governance"]
+        Eureka["Netflix Eureka Discovery Server<br/>(Port 8761)"]
+        Gateway -.->|"Heartbeat & Registry"| Eureka
     end
 
-    subgraph "Spring Boot Core Services"
-        Gateway -->|/api/auth/**| UserSvc["👤 User & Auth Service\n(Port 8081)\n• JWT RS256/HS256\n• Role Authorization"]
-        Gateway -->|/api/products/**\n/api/admin/products/**| ProdSvc["📦 Product & Inventory Service\n(Port 8082)\n• Catalog & Categories\n• Thread-Safe Stock Stepper"]
-        Gateway -->|/api/orders/**\n/api/admin/orders/**| OrderSvc["💳 Order & Payment Service\n(Port 8083)\n• Digital Invoice Generation\n• Cancellations & Returns"]
+    subgraph Core ["Spring Boot Core Microservices"]
+        Gateway -->|"/api/auth"| UserSvc["User & Auth Service<br/>(Port 8081)<br/>• JWT Authentication<br/>• Role Authorization"]
+        Gateway -->|"/api/products"| ProdSvc["Product & Inventory Service<br/>(Port 8082)<br/>• Catalog & Taxonomy<br/>• Thread-Safe Stock Stepper"]
+        Gateway -->|"/api/orders"| OrderSvc["Order & Payment Service<br/>(Port 8083)<br/>• Digital Tax Receipts<br/>• Cancellations & Refunds"]
 
-        UserSvc -.->|Register| Eureka
-        ProdSvc -.->|Register| Eureka
-        OrderSvc -.->|Register| Eureka
+        UserSvc -.->|"Register"| Eureka
+        ProdSvc -.->|"Register"| Eureka
+        OrderSvc -.->|"Register"| Eureka
 
-        OrderSvc -->|OpenFeign RPC\n(Stock Deduction & Restock Rollback)| ProdSvc
+        OrderSvc -->|"OpenFeign RPC (Stock Restock & Rollback)"| ProdSvc
     end
 
-    subgraph "Python Data Science Microservice"
-        Gateway -->|/api/ai/**| AISvc["🤖 Scikit-Learn AI Microservice\n(Port 8084)\n• TF-IDF Semantic Search\n• Cosine Similarity Recommendations\n• Naive Bayes Sentiment Analysis"]
-        AISvc -->|Catalog Ingestion| ProdSvc
+    subgraph AI ["Python Data Science Microservice"]
+        Gateway -->|"/api/ai"| AISvc["Scikit-Learn AI Service<br/>(Port 8084)<br/>• TF-IDF Semantic Search<br/>• Cosine Similarity Recommendations<br/>• Naive Bayes Sentiment Analysis"]
+        AISvc -->|"Catalog Ingestion"| ProdSvc
     end
 ```
 
