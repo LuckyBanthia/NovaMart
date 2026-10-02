@@ -1,4 +1,4 @@
-# NovaMart — Microservices & Machine Learning E-Commerce Platform
+# NovaMart — Distributed Microservices & AI Platform
 
 NovaMart is an end-to-end full-stack e-commerce system architected as a **polyglot microservices application**. The platform combines **Java 17 / Spring Boot 3** for transactional business domains, **Python / Scikit-Learn** for machine learning and recommendation services, and **React 18 / Vite / Tailwind CSS** for the customer storefront and administrative portal.
 
