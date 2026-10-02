@@ -1,311 +1,252 @@
-# 🛒 NovaMart — Cloud-Native Distributed Microservices & AI Platform
+# NovaMart — Microservices & Machine Learning E-Commerce Platform
 
-[![Java 17](https://img.shields.io/badge/Java-17%2B-orange?logo=openjdk)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.4-brightgreen?logo=springboot)](https://spring.io/projects/spring-boot)
-[![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-2023.0.3-green?logo=spring)](https://spring.io/projects/spring-cloud)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://www.python.org/)
-[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.4%2B-F7931E?logo=scikitlearn)](https://scikit-learn.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?logo=vite)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-
-**NovaMart** is an enterprise-grade, polyglot e-commerce platform built on a **distributed microservices architecture**. It features **5 Java Spring Boot microservices** coordinating through **Netflix Eureka Service Discovery** and **Spring Cloud API Gateway**, a dedicated **Python Scikit-Learn Machine Learning microservice** for real-time recommendations and NLP sentiment analysis, and a modern **React (Vite + Tailwind CSS)** storefront and administrative portal.
+NovaMart is an end-to-end full-stack e-commerce system architected as a **polyglot microservices application**. The platform combines **Java 17 / Spring Boot 3** for transactional business domains, **Python / Scikit-Learn** for machine learning and recommendation services, and **React 18 / Vite / Tailwind CSS** for the customer storefront and administrative portal.
 
 ---
 
-## 📑 Table of Contents
-- [System Architecture](#-system-architecture)
-- [Microservices & Port Allocation](#-microservices--port-allocation)
-- [Core Business Capabilities](#-core-business-capabilities)
-- [Machine Learning Engine (Scikit-Learn)](#-machine-learning-engine-scikit-learn)
-- [Project Directory Structure](#-project-directory-structure)
-- [API Reference](#-api-reference)
-- [Quick Start Guide](#-quick-start-guide)
-- [Demo Credentials](#-demo-credentials)
-- [Code Quality & Debugging Guidelines](#-code-quality--debugging-guidelines)
+## 🏗️ System Architecture
 
----
-
-## 🏛️ System Architecture
+All client traffic enters through a unified **Spring Cloud API Gateway** (`:8080`), which routes requests to backend services registered with **Netflix Eureka** (`:8761`). Synchronous inter-service communication (such as inventory deduction and restock compensation) is handled via **Spring Cloud OpenFeign**.
 
 ```mermaid
 flowchart TD
     Client["React Storefront & Admin Portal<br/>(Port 5173)"] -->|"HTTP / REST"| Gateway["Spring Cloud API Gateway<br/>(Port 8080)"]
 
-    subgraph Discovery ["Service Discovery & Governance"]
-        Eureka["Netflix Eureka Discovery Server<br/>(Port 8761)"]
-        Gateway -.->|"Heartbeat & Registry"| Eureka
+    subgraph Discovery ["Service Discovery & Registry"]
+        Eureka["Netflix Eureka Server<br/>(Port 8761)"]
+        Gateway -.->|"Registry Lookup"| Eureka
     end
 
-    subgraph Core ["Spring Boot Core Microservices"]
-        Gateway -->|"/api/auth"| UserSvc["User & Auth Service<br/>(Port 8081)<br/>• JWT Authentication<br/>• Role Authorization"]
-        Gateway -->|"/api/products"| ProdSvc["Product & Inventory Service<br/>(Port 8082)<br/>• Catalog & Taxonomy<br/>• Thread-Safe Stock Stepper"]
-        Gateway -->|"/api/orders"| OrderSvc["Order & Payment Service<br/>(Port 8083)<br/>• Digital Tax Receipts<br/>• Cancellations & Refunds"]
+    subgraph Core ["Spring Boot Business Services"]
+        Gateway -->|"/api/auth"| UserSvc["User & Auth Service<br/>(Port 8081)<br/>• JWT Authentication<br/>• Role-Based Access Control"]
+        Gateway -->|"/api/products"| ProdSvc["Product Catalog Service<br/>(Port 8082)<br/>• Taxonomy & Inventory<br/>• Stock Mutation Controls"]
+        Gateway -->|"/api/orders"| OrderSvc["Order & Checkout Service<br/>(Port 8083)<br/>• Lifecycle Management<br/>• Invoice Generation"]
 
         UserSvc -.->|"Register"| Eureka
         ProdSvc -.->|"Register"| Eureka
         OrderSvc -.->|"Register"| Eureka
 
-        OrderSvc -->|"OpenFeign RPC (Stock Restock & Rollback)"| ProdSvc
+        OrderSvc -->|"OpenFeign RPC (Stock Reservation & Restock)"| ProdSvc
     end
 
-    subgraph AI ["Python Data Science Microservice"]
-        Gateway -->|"/api/ai"| AISvc["Scikit-Learn AI Service<br/>(Port 8084)<br/>• TF-IDF Semantic Search<br/>• Cosine Similarity Recommendations<br/>• Naive Bayes Sentiment Analysis"]
+    subgraph ML ["Python AI & Data Science Service"]
+        Gateway -->|"/api/ai"| AISvc["Scikit-Learn AI Service<br/>(Port 8084)<br/>• TF-IDF Semantic Search<br/>• Cosine Similarity Recommendations<br/>• Naive Bayes Sentiment Classifier"]
         AISvc -->|"Catalog Ingestion"| ProdSvc
     end
 ```
 
 ---
 
-## 🔌 Microservices & Port Allocation
+## 🛠️ Technology Stack
 
-| Service Name | Technology Stack | Port | Key Responsibilities |
-|---|---|---|---|
-| **`discovery-service`** | Spring Cloud Netflix Eureka | `8761` | Central service registry, instance health monitoring, and dynamic routing lookup. |
-| **`gateway-service`** | Spring Cloud Gateway | `8080` | Unified platform reverse proxy, path-based routing, JWT bearer forwarding, and global CORS policies. |
-| **`user-service`** | Spring Boot 3, Spring Security, JWT, JPA | `8081` | User registration, credential authentication, BCrypt hashing, and stateless JWT token issuance. |
-| **`product-service`** | Spring Boot 3, Spring Data JPA, H2 Database | `8082` | Product catalog, multi-category taxonomy, admin stock stepper, and atomic inventory mutations. |
-| **`order-service`** | Spring Boot 3, OpenFeign, JPA, H2 Database | `8083` | Order processing, payment simulation, digital receipts, pre-shipment cancellations, and post-delivery refunds. |
-| **`ai-service`** | Python 3, FastAPI, Scikit-Learn, Pandas | `8084` | TF-IDF semantic query matching, sub-45ms cosine similarity product recommendations, and NLP review sentiment. |
-| **`frontend`** | React 18, Vite, Tailwind CSS, Lucide Icons | `5173` | Responsive customer storefront, predictive search dropdown, and executive administrative dashboard. |
-
----
-
-## 💡 Core Business Capabilities
-
-### 1. Robust Distributed Order Lifecycle & Automated Restock Rollback
-* **Customer Pre-Shipping Cancellation**: Customers can cancel orders in `PLACED`, `CONFIRMED`, or `PROCESSING` states. The system automatically marks payment as `REFUNDED` and invokes **OpenFeign RPC** to replenish inventory units in `product-service`.
-* **Post-Delivery Return & Refund**: Delivered orders (`DELIVERED`) can initiate a return request (`RETURN_REQUESTED`). Administrators review and approve the return in the Admin Dashboard, which executes payment payout and automatically restores warehouse stock.
-* **Race-Condition-Free Stock Operations**: All stock deduction and increment operations use synchronized locks and transactional isolation to prevent overselling across concurrent checkouts.
-
-### 2. Live Predictive Search & Synonym Matching
-* **Interactive Navbar Dropdown**: Typing any query triggers a debounced live search query to the Scikit-Learn microservice (`/api/ai/search`).
-* **Semantic Expansion**: Recognizes e-commerce intent and synonyms (e.g., searching `"laptop"` or `"notebook"` instantly matches the *"UltraBook Zenith M3 OLED"* with similarity percentages).
-* **Trending Chips**: Quick 1-click discovery tags for popular categories when the search bar is focused.
-
-### 3. Administrator Operations Control Center
-* **Inline Stock Stepper**: Increment (`+1`), decrement (`-1`), quick restock (`+10`), or direct numeric input with automatic live persistence.
-* **Order Status Management**: Interactive dropdown allowing administrators to update order status (`PLACED` → `CONFIRMED` → `PROCESSING` → `SHIPPED` → `DELIVERED`).
-* **Instant Digital Invoices**: Printable official tax receipt with unique order numbers (`NM-YYYYMMDD-XXXX`), tax breakdown, recipient details, and line item receipts.
+| Domain | Technologies | Rationale |
+|---|---|---|
+| **API Gateway** | Spring Cloud Gateway, Reactive Netty | Single entry point for routing, centralized CORS, and client decoupling. |
+| **Service Discovery** | Spring Cloud Netflix Eureka | Dynamic service registration and client-side load balancing. |
+| **Backend Services** | Java 17, Spring Boot 3.3.4, Spring Data JPA, Hibernate | Type-safe, production-ready framework for transactional domain logic. |
+| **Inter-Service RPC** | Spring Cloud OpenFeign | Declarative HTTP client for synchronous inter-service communication. |
+| **Authentication** | Spring Security, JJWT (io.jsonwebtoken), BCrypt | Stateless JWT Bearer token authentication with role-based access control. |
+| **Database & Persistence** | In-Memory H2 Database (with Spring Data JPA) | Zero-friction local setup for immediate evaluation; swappable to PostgreSQL or MySQL via `application.properties`. |
+| **Machine Learning Service** | Python 3.10+, FastAPI, Scikit-Learn, Pandas, NumPy, Uvicorn | Dedicated ML runtime leveraging Python's data science ecosystem. |
+| **Frontend Application** | React 18, Vite, Tailwind CSS, Lucide Icons | Responsive Single Page Application (SPA) with modern state management. |
 
 ---
 
-## 🧠 Machine Learning Engine (Scikit-Learn)
+## ⚙️ Service Topology & Port Mapping
 
-All artificial intelligence and data science workloads are decoupled into `backend/ai-service`, strictly following Scikit-Learn best practices:
-
-```
-backend/ai-service/
-├── main.py                     # FastAPI application & REST routing (/api/ai/**)
-├── requirements.txt            # Python dependencies (scikit-learn, pandas, numpy, uvicorn)
-└── models/
-    ├── recommender.py          # TF-IDF Vectorizer + Cosine Similarity recommendation engine
-    ├── sentiment.py            # Scikit-Learn Pipeline (TfidfVectorizer + MultinomialNB)
-    └── category_predictor.py   # Logistic Regression catalog classifier
-```
-
-### 1. Content-Based Recommendation Engine (`models/recommender.py`)
-- **Mathematical Principle**: Combines product titles, categories, and descriptions into text bags. Applies `TfidfVectorizer(ngram_range=(1, 2), stop_words='english')` to construct a sparse term-document matrix.
-- **Similarity Scoring**: Computes pairwise Cosine Similarity:
-  $$\text{Similarity}(A, B) = \frac{A \cdot B}{\|A\| \|B\|}$$
-- **Latency Benchmark**: Sub-45ms inference time, serving similarity percentages directly in the customer UI.
-
-### 2. Customer Review Sentiment Analyzer (`models/sentiment.py`)
-- **Pipeline Architecture**: `Pipeline([('tfidf', TfidfVectorizer()), ('classifier', MultinomialNB(alpha=0.5))])`
-- **Output**: Categorizes feedback into `POSITIVE`, `NEUTRAL`, or `NEGATIVE` along with calibrated prediction confidence probabilities.
+| Service Name | Directory | Port | Primary Responsibilities |
+|---|---|:---:|---|
+| **Discovery Service** | `backend/discovery-service` | `8761` | Netflix Eureka service registry and health status. |
+| **API Gateway** | `backend/gateway-service` | `8080` | Reverse proxy, path routing (`/api/**`), and CORS management. |
+| **User Service** | `backend/user-service` | `8081` | User registration, authentication, BCrypt password hashing, JWT generation. |
+| **Product Service** | `backend/product-service` | `8082` | Product catalog, categories, inventory management, stock increment/decrement. |
+| **Order Service** | `backend/order-service` | `8083` | Order creation, tax/discount calculation, OpenFeign stock reservation, cancellations, returns, and digital receipts. |
+| **AI Microservice** | `backend/ai-service` | `8084` | TF-IDF recommendation engine, semantic search, review sentiment analysis, category predictor. |
+| **Frontend Web App** | `frontend/` | `5173` | React storefront, cart/wishlist management, admin inventory and order dashboard. |
 
 ---
 
-## 📂 Project Directory Structure
+## 💡 Key Architectural & Engineering Decisions
 
-```
-novamart/
-├── README.md                           # Master platform documentation
-├── .gitignore                          # Comprehensive multi-language ignore rules
-├── backend/
-│   ├── pom.xml                         # Maven multi-module parent POM
-│   ├── start-all.ps1                   # Master automated microservices startup script
-│   ├── stop-all.ps1                    # Master graceful shutdown script
-│   ├── common-lib/                     # Shared DTOs, Enums, ApiResponse, & JwtUtils
-│   ├── discovery-service/              # Eureka Service Registry (Port 8761)
-│   ├── gateway-service/                # Spring Cloud API Gateway (Port 8080)
-│   ├── user-service/                   # Authentication & User Management (Port 8081)
-│   ├── product-service/                # Catalog, Inventory, & Admin Products (Port 8082)
-│   ├── order-service/                  # Orders, Payments, Refunds, & Feign Client (Port 8083)
-│   └── ai-service/                     # Python Scikit-Learn ML Microservice (Port 8084)
-│       ├── main.py
-│       ├── requirements.txt
-│       └── models/
-│           ├── recommender.py
-│           ├── sentiment.py
-│           └── category_predictor.py
-└── frontend/                           # React 18 + Vite + Tailwind CSS Storefront
-    ├── package.json
-    ├── vite.config.js
-    └── src/
-        ├── App.jsx                     # Top-level dynamic viewport & layout
-        ├── api/api.js                  # Axios client configured for Gateway routes
-        ├── components/
-        │   ├── common/Navbar.jsx       # Header with live AI predictive search dropdown
-        │   └── customer/CartDrawer.jsx # Slide-out shopping bag
-        └── pages/
-            ├── admin/AdminDashboard.jsx     # Executive inventory & refund management
-            ├── customer/HomePage.jsx        # Landing spotlight & department grid
-            ├── customer/ProductListingPage.jsx # Multi-faceted filtering & search
-            ├── customer/ProductDetailPage.jsx  # Specifications & Scikit-Learn recommendations
-            └── customer/MyOrdersPage.jsx       # Order tracking, cancellations, returns & receipts
-```
+### 1. Polyglot Microservices Separation
+- **Java / Spring Boot** is assigned to transactional business workloads (users, products, orders) where strong typing, declarative transactions (`@Transactional`), and JPA entity relationships are critical.
+- **Python / FastAPI** is assigned to machine learning workloads to leverage the Scikit-Learn ecosystem without burdening the JVM runtime with heavy mathematical libraries.
+
+### 2. Distributed Order Lifecycle & Inventory Compensation
+- **Order Placement**: When a customer places an order, `order-service` calls `product-service` via **OpenFeign** (`ProductClient`) to deduct stock units synchronously.
+- **Pre-Shipment Cancellation**: Customers can cancel orders while in `PLACED`, `CONFIRMED`, or `PROCESSING` state. The order status updates to `CANCELLED`, payment is set to `REFUNDED`, and a compensating OpenFeign call replenishes the inventory back into `product-service`.
+- **Post-Delivery Returns**: For orders in `DELIVERED` status, customers can submit a return request (`RETURN_REQUESTED`). Administrators review and approve the return in the Admin Dashboard, which executes the refund and automatically restocks the warehouse catalog.
+
+### 3. Machine Learning Pipelines (Scikit-Learn)
+- **Content-Based Recommendations (`recommender.py`)**:
+  - Builds a composite text representation combining product title, category, and description.
+  - Generates term vectors using `TfidfVectorizer(ngram_range=(1, 2), stop_words='english')`.
+  - Calculates pairwise **Cosine Similarity** to return ranked similar products when viewing a product detail page.
+- **Semantic Search (`/api/ai/search`)**:
+  - Transforms search queries into the catalog TF-IDF vector space to match user intent and synonyms (e.g., query `"laptop"` matches `"UltraBook Zenith M3 OLED"` based on vector similarity).
+- **Review Sentiment Analysis (`sentiment.py`)**:
+  - Employs a Scikit-Learn `Pipeline` composed of `TfidfVectorizer` and `MultinomialNB(alpha=0.5)` to classify review texts into `POSITIVE`, `NEUTRAL`, or `NEGATIVE` with confidence probabilities.
+- **Department Classifier (`category_predictor.py`)**:
+  - Uses `LogisticRegression` to infer the appropriate store category from raw title and description text.
+
+### 4. Zero-Friction Persistence (H2 In-Memory)
+- Services use Spring Data JPA backed by H2 in-memory databases by default. This enables instant clone-and-run evaluation without requiring external database server setup or Docker containers.
+- Data seeders (`DataInitializer`) populate realistic mock products, categories, and test accounts on startup.
+- Production migration to MySQL or PostgreSQL requires only updating the JDBC driver and connection string in `application.properties`.
 
 ---
 
-## 📡 API Reference
+## 🚀 Getting Started
 
-All requests pass through the Spring Cloud API Gateway at `http://localhost:8080`.
-
-### 1. Authentication Service (`/api/auth/**`)
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|:---:|
-| `POST` | `/api/auth/register` | Register new customer account | No |
-| `POST` | `/api/auth/login` | Authenticate credentials and receive Bearer JWT | No |
-| `GET` | `/api/auth/me` | Fetch profile details of authenticated user | Yes |
-
-### 2. Product Catalog Service (`/api/products/**` & `/api/admin/products/**`)
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|:---:|
-| `GET` | `/api/products` | Browse catalog with query, category, and price bounds | No |
-| `GET` | `/api/products/{id}` | Get detailed product specifications | No |
-| `GET` | `/api/products/featured` | Spotlight items showcased on home banner | No |
-| `POST` | `/api/admin/products` | Admin: Create new product | Admin |
-| `PUT` | `/api/admin/products/{id}` | Admin: Update product details & specifications | Admin |
-| `PATCH` | `/api/admin/products/{id}/stock` | Admin: Rapid inventory update (`{"quantity": N}` or `{"delta": N}`) | Admin |
-| `DELETE` | `/api/admin/products/{id}` | Admin: Delete product from catalog | Admin |
-
-### 3. Order Processing Service (`/api/orders/**` & `/api/admin/orders/**`)
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|:---:|
-| `POST` | `/api/orders` | Place order, deduct inventory via Feign, settle payment | Optional |
-| `GET` | `/api/orders/my-orders` | Retrieve authenticated customer purchase history | Yes |
-| `GET` | `/api/orders/{orderNumber}/receipt` | Fetch verified digital tax invoice | No |
-| `POST` | `/api/orders/{id}/cancel` | Cancel order before shipment & restore inventory | Optional |
-| `POST` | `/api/orders/{id}/return` | Submit Return & Refund request for delivered order | Optional |
-| `GET` | `/api/admin/orders` | Admin: Fetch all platform orders | Admin |
-| `PATCH` | `/api/admin/orders/{id}/status` | Admin: Update status (`DELIVERED`, `SHIPPED`, etc.) | Admin |
-| `POST` | `/api/admin/orders/{id}/refund` | Admin: Approve return and execute refund payout | Admin |
-
-### 4. Scikit-Learn AI Service (`/api/ai/**`)
-| Method | Endpoint | Description | Algorithm |
-|---|---|---|---|
-| `GET` | `/api/ai/search?q={query}` | Predictive query matching & recommendation | TF-IDF + Cosine Similarity |
-| `GET` | `/api/ai/recommendations/{id}` | Related products based on item specifications | Cosine Similarity Matrix |
-| `POST` | `/api/ai/analyze-sentiment` | Review text sentiment classification | Multinomial Naive Bayes |
-| `POST` | `/api/ai/predict-category` | Automated product department prediction | Logistic Regression |
-
----
-
-## 🚀 Quick Start Guide
-
-### System Prerequisites
+### Prerequisites
 * **Java**: JDK 17 or higher
-* **Maven**: 3.8+ (or use included `./mvnw.cmd` / `./mvnw`)
-* **Python**: 3.10+ (with `pip`)
-* **Node.js**: 18+ and `npm`
+* **Maven**: 3.8+ (or use the included `backend/mvnw.cmd` / `backend/mvnw`)
+* **Python**: 3.10+ with `pip`
+* **Node.js**: 18+ with `npm`
 
 ---
 
-### Method A: One-Click Automated Startup (Windows PowerShell)
+### Quick Start (Automated PowerShell Script)
 
-1. Open PowerShell in `backend/`:
-   ```powershell
-   ./start-all.ps1
-   ```
-   *This starts Eureka (8761), User (8081), Product (8082), Order (8083), AI (8084), and Gateway (8080) in the required sequence.*
+A master startup script is provided in `backend/` to launch all services in dependency order:
 
-2. Start the Frontend in `frontend/`:
-   ```bash
-   npm install
-   npm run dev
-   ```
+```powershell
+# 1. Start all backend microservices
+cd backend
+./start-all.ps1
 
-3. Open **`http://localhost:5173`** in your browser.
+# 2. In a new terminal, start the React frontend
+cd ../frontend
+npm install
+npm run dev
+```
 
-4. To stop all backend services cleanly at any time:
-   ```powershell
-   ./stop-all.ps1
-   ```
+Open **`http://localhost:5173`** in your browser.
+
+To stop all backend services cleanly:
+```powershell
+cd backend
+./stop-all.ps1
+```
 
 ---
 
-### Method B: Manual Startup (Any OS / Linux / macOS)
+### Manual Multi-Terminal Startup
 
-<details>
-<summary>Click to view step-by-step commands</summary>
+If you prefer running services individually across terminals:
 
-#### Step 1: Build Java Modules
+#### Step 1: Install Python AI Dependencies
+```bash
+cd backend/ai-service
+pip install -r requirements.txt
+```
+
+#### Step 2: Build Java Microservices
 ```bash
 cd backend
 ./mvnw clean package -DskipTests
 ```
 
-#### Step 2: Start Discovery Server (Port 8761)
-```bash
-java -jar discovery-service/target/discovery-service-1.0.0.jar
-```
-*(Wait ~8 seconds for Eureka to initialize)*
+#### Step 3: Launch Services in Order
 
-#### Step 3: Start Core Services
-```bash
-# Terminal 1: User Service (Port 8081)
-java -jar user-service/target/user-service-1.0.0.jar
-
-# Terminal 2: Product Service (Port 8082)
-java -jar product-service/target/product-service-1.0.0.jar
-
-# Terminal 3: Order Service (Port 8083)
-java -jar order-service/target/order-service-1.0.0.jar
-```
-
-#### Step 4: Start Python AI Microservice (Port 8084)
-```bash
-cd backend/ai-service
-pip install -r requirements.txt
-python main.py
-```
-
-#### Step 5: Start API Gateway (Port 8080)
-```bash
-java -jar gateway-service/target/gateway-service-1.0.0.jar
-```
-
-#### Step 6: Start Frontend (Port 5173)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-</details>
-
----
-
-## 👥 Demo Credentials
-
-The platform initializes with pre-seeded accounts:
-
-| Role | Email | Password | Access Level |
+| Terminal | Directory | Command | URL / Port |
 |---|---|---|---|
-| **Customer** | `customer@novamart.com` | `Customer@123` | Storefront browsing, cart, order placement, returns, and digital receipts |
-| **Administrator** | `admin@novamart.com` | `Admin@123` | High-privilege Operations Control, live stock stepper, refunds approval |
+| **Terminal 1** | `backend/discovery-service` | `java -jar target/discovery-service-1.0.0.jar` | `http://localhost:8761` |
+| **Terminal 2** | `backend/user-service` | `java -jar target/user-service-1.0.0.jar` | `http://localhost:8081` |
+| **Terminal 3** | `backend/product-service` | `java -jar target/product-service-1.0.0.jar` | `http://localhost:8082` |
+| **Terminal 4** | `backend/order-service` | `java -jar target/order-service-1.0.0.jar` | `http://localhost:8083` |
+| **Terminal 5** | `backend/ai-service` | `python main.py` | `http://localhost:8084` |
+| **Terminal 6** | `backend/gateway-service` | `java -jar target/gateway-service-1.0.0.jar` | `http://localhost:8080` |
+| **Terminal 7** | `frontend/` | `npm run dev` | `http://localhost:5173` |
+
+*(Note: Wait ~8 seconds after starting Discovery Service before launching the remaining services).*
 
 ---
 
-## 🛠️ Code Quality & Debugging Guidelines
+## 🔑 Pre-Configured Test Accounts
 
-- **Strict Separation of Concerns**: Java Spring Boot strictly owns core transactional business logic, relational entities, authentication, and inter-service Feign contracts; Python is exclusively dedicated to Scikit-Learn data science algorithms.
-- **Zero Monolithic Dependencies**: Microservices communicate strictly over network boundaries via HTTP/REST and OpenFeign RPC.
-- **Comprehensive Inline Documentation**: Every controller, service method, and Python model includes student- and engineer-friendly comments outlining debugging strategies, architectural context, and error recovery flows.
-- **Fail-Safe Fallbacks**: The AI microservice features self-healing fallback catalogs to ensure zero storefront downtime even during upstream restarts.
+| Role | Email | Password | Permissions |
+|---|---|---|---|
+| **Customer** | `customer@novamart.com` | `password123` | Browse catalog, cart, wishlist, checkout, cancel orders, request returns. |
+| **Administrator** | `admin@novamart.com` | `admin123` | Inventory stepper (+1, -1, custom), order status management, return & refund approval. |
+
+*(New customer accounts can also be created via the registration modal on the storefront).*
+
+---
+
+## 📡 API Reference Overview
+
+All client requests route through the API Gateway at `http://localhost:8080`:
+
+### Authentication (`/api/auth/**`)
+* `POST /api/auth/register` — Register a new customer account
+* `POST /api/auth/login` — Authenticate credentials and receive Bearer JWT
+* `GET  /api/auth/me` — Retrieve current authenticated user profile
+
+### Product Catalog (`/api/products/**` & `/api/admin/products/**`)
+* `GET   /api/products` — Search and filter products (query, category, price)
+* `GET   /api/products/{id}` — Fetch product details by ID
+* `GET   /api/products/featured` — Fetch spotlight products
+* `POST  /api/admin/products` — Create a new product *(Admin)*
+* `PUT   /api/admin/products/{id}` — Update product specifications *(Admin)*
+* `PATCH /api/admin/products/{id}/stock` — Adjust inventory stock level *(Admin)*
+
+### Orders & Checkout (`/api/orders/**` & `/api/admin/orders/**`)
+* `POST /api/orders` — Submit new order and trigger stock reservation
+* `GET  /api/orders/my-orders` — List authenticated user's order history
+* `GET  /api/orders/{orderNumber}` — Retrieve order summary and invoice details
+* `POST /api/orders/{id}/cancel` — Cancel order before shipping (triggers restock)
+* `POST /api/orders/{id}/return` — Request return on delivered order
+* `GET  /api/admin/orders` — List all orders across the system *(Admin)*
+* `PUT  /api/admin/orders/{id}/status` — Update order status *(Admin)*
+* `POST /api/admin/orders/{id}/refund` — Approve return and refund payment *(Admin)*
+
+### Machine Learning (`/api/ai/**`)
+* `GET  /api/ai/recommendations/{productId}` — Get top-N similar products (TF-IDF + Cosine Similarity)
+* `GET  /api/ai/search?q={query}` — Semantic search with relevance scoring
+* `POST /api/ai/analyze-sentiment` — Classify review sentiment (Multinomial Naive Bayes)
+* `POST /api/ai/predict-category` — Predict product department from title & description
+
+---
+
+## 📁 Repository Structure
+
+```
+novamart/
+├── README.md                           # Master system documentation
+├── LICENSE                             # MIT License
+├── .gitignore                          # Root ignore rules (Maven, Node, Python, IDE)
+├── backend/
+│   ├── pom.xml                         # Parent Maven project descriptor
+│   ├── start-all.ps1                   # Automated startup script
+│   ├── stop-all.ps1                    # Graceful shutdown script
+│   ├── common-lib/                     # Shared DTOs, Enums, ApiResponse, JwtUtils
+│   ├── discovery-service/              # Netflix Eureka Server (:8761)
+│   ├── gateway-service/                # Spring Cloud API Gateway (:8080)
+│   ├── user-service/                   # User management & JWT authentication (:8081)
+│   ├── product-service/                # Product catalog & inventory (:8082)
+│   ├── order-service/                  # Orders, payments, Feign RPC client (:8083)
+│   └── ai-service/                     # Python FastAPI & Scikit-Learn service (:8084)
+│       ├── main.py
+│       ├── requirements.txt
+│       └── models/
+│           ├── recommender.py          # TF-IDF + Cosine Similarity
+│           ├── sentiment.py            # Multinomial Naive Bayes Pipeline
+│           └── category_predictor.py   # Logistic Regression
+└── frontend/                           # React 18 + Vite Storefront (:5173)
+    ├── package.json
+    ├── vite.config.js
+    └── src/
+        ├── api/api.js                  # Axios client routed through Gateway
+        ├── context/                    # Auth, Cart, Wishlist context providers
+        ├── components/                 # Reusable UI components & modals
+        └── pages/
+            ├── customer/               # Storefront, PDP, Checkout, My Orders
+            └── admin/                  # Inventory & Order Operations Dashboard
+```
 
 ---
 
 ## 📄 License
-This project is open-source under the [MIT License](LICENSE).
+
+This project is licensed under the [MIT License](LICENSE).
