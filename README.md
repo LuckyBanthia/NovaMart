@@ -102,7 +102,6 @@ flowchart TD
 * **Java**: JDK 17 or higher
 * **Maven**: 3.8+ (or use the included `backend/mvnw.cmd` / `backend/mvnw`)
 * **Python**: 3.10+ with `pip`
-* **Node.js**: 18+ with `npm`
 
 ---
 
